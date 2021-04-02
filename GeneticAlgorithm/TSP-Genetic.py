@@ -7,6 +7,7 @@ from time import perf_counter
 import cProfile
 import pstats
 import os
+import csv
 
 #TODO: Add timers and graphs
 #TODO: See how we can improve performance (8-9 seconds for graphs of size 10-30)
@@ -54,17 +55,17 @@ def selection(popRanked, eliteSize):
 		selectionResults.append(popRanked[i][0])
 
 	#Randomly choose the remaining routes (THE ALGORITHM BOTTLENECKS HERE BECAUSE N^2)
-	for i in range(0, len(popRanked) - eliteSize):
-		pick = 100*np.random.random()
-		for i in range(0, len(popRanked)):
-			if pick <= df.iat[i,3]:
-				selectionResults.append(popRanked[i][0])
-				break
+	# for i in range(0, len(popRanked) - eliteSize):
+	# 	pick = 100*np.random.random()
+	# 	for i in range(0, len(popRanked)):
+	# 		if pick <= df.iat[i,3]:
+	# 			selectionResults.append(popRanked[i][0])
+	# 			break
 	
 	#ALTERNATIVE RANDOM SELECTION METHOD
-	# for i in range(0, len(popRanked) - eliteSize):
-	# 	pick = random.randint(0, len(popRanked))
-	# 	selectionResults.append(popRanked[i][0])
+	for i in range(0, len(popRanked) - eliteSize):
+		pick = random.randint(0, len(popRanked))
+		selectionResults.append(popRanked[i][0])
 	return selectionResults #An array of which indexes (from the original unsorted population) will be selected for mating
 
 def getMatingPool(pop, selectionResults):
@@ -80,6 +81,9 @@ def breed(parent1, parent2):
 
 	#Routes are constrained in that they must visit all routes exactly once
 	#Therefore we use "ordered crossover" to breed our routes
+	#This is causing a bottleneck is large graphs
+	#Maybe we should consider other ways to "breed" routes that have less time complexity
+
 	child = []
 	childParent1 = []
 	childParent2 = []
@@ -157,7 +161,7 @@ def nextGeneration(currentGen, eliteSize, mutationRate):
 	rankedPop = determineFitnessAndRank(currentGen)
 	selectionResults = selection(rankedPop, eliteSize)
 	matingPool = getMatingPool(currentGen, selectionResults)
-	children = breedPop(matingPool, eliteSize)
+	children = breedPop(matingPool, eliteSize) #Bottleneck occuring here
 	nextGen = mutatePop(children, mutationRate)
 
 	return nextGen
@@ -190,6 +194,8 @@ ELITE_SIZE = 20
 MUTATION_RATE = 0.01
 GENERATIONS = 50
 
+FILENAME = f'GenAlg_pop={POP_SIZE}_elite={ELITE_SIZE}_mut={MUTATION_RATE}_gens={GENERATIONS}'
+
 #Create the graph, run the algorithm
 data = pd.DataFrame(columns=['j','time', 'length', 'improvement percentage'])
 i = 0
@@ -207,11 +213,11 @@ for j in range(MIN_SIZE, MAX_SIZE, INCREMENT):
 	i += 1
 
 	#Output profiling info to a text file
-	with open('./GeneticAlgorithmProfiling.txt', 'a') as stream:
+	with open(f'./GeneticProfilings/{FILENAME}_Profiling.txt', 'a+') as stream:
 		ps = pstats.Stats(profile, stream=stream)
 		ps.sort_stats('cumtime')
 		ps.print_stats(20)
 	
 #Output dataframe to another file
-data.to_csv('./GeneticAlgorithmOutput.csv', mode = 'w')
+data.to_csv(f'./GeneticOutputs/{FILENAME}_Output.csv', mode = 'w')
 
