@@ -1,3 +1,4 @@
-/GeneticAlgorithm/GenAlg*.csv
-/GeneticAlgorithm/GenAlg*.txt
+GeneticAlgorithm/GeneticOutputs/GenAlg*.csv
+GeneticAlgorithm/GeneticProfilings/GenAlg*.txt
+
 __pycache__

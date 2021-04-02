@@ -213,11 +213,11 @@ for j in range(MIN_SIZE, MAX_SIZE, INCREMENT):
 	i += 1
 
 	#Output profiling info to a text file
-	with open(f'./GeneticProfilings/{FILENAME}_Profiling.txt', 'a+') as stream:
+	with open(f'./GeneticAlgorithm/GeneticProfilings/{FILENAME}_Profiling.txt', 'a+') as stream:
 		ps = pstats.Stats(profile, stream=stream)
 		ps.sort_stats('cumtime')
 		ps.print_stats(20)
 	
 #Output dataframe to another file
-data.to_csv(f'./GeneticOutputs/{FILENAME}_Output.csv', mode = 'w')
+data.to_csv(f'./GeneticAlgorithm/GeneticOutputs/{FILENAME}_Output.csv', mode = 'w')
 
