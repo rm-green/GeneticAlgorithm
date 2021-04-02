@@ -4,6 +4,9 @@ import numpy as np
 import operator
 import random
 from time import perf_counter
+import cProfile
+import pstats
+import os
 
 #TODO: Add timers and graphs
 #TODO: See how we can improve performance (8-9 seconds for graphs of size 10-30)
@@ -50,13 +53,18 @@ def selection(popRanked, eliteSize):
 		#Add our n number of elite routes
 		selectionResults.append(popRanked[i][0])
 
-	#Randomly choose the remaining routes
+	#Randomly choose the remaining routes (THE ALGORITHM BOTTLENECKS HERE BECAUSE N^2)
 	for i in range(0, len(popRanked) - eliteSize):
 		pick = 100*np.random.random()
 		for i in range(0, len(popRanked)):
 			if pick <= df.iat[i,3]:
 				selectionResults.append(popRanked[i][0])
 				break
+	
+	#ALTERNATIVE RANDOM SELECTION METHOD
+	# for i in range(0, len(popRanked) - eliteSize):
+	# 	pick = random.randint(0, len(popRanked))
+	# 	selectionResults.append(popRanked[i][0])
 	return selectionResults #An array of which indexes (from the original unsorted population) will be selected for mating
 
 def getMatingPool(pop, selectionResults):
@@ -165,22 +173,45 @@ def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, generations):
 		print(f'Gen {i} Complete')
 	
 	#Get our new best distance and route
-	print(f"Initial Distance: {initialDistance} \nFinal Distance: {1 / determineFitnessAndRank(pop)[0][1]}")
+	bestDistance = 1 / determineFitnessAndRank(pop)[0][1]
+	print(f"Initial Distance: {initialDistance} \nFinal Distance: {bestDistance}")
+	improvementPerc = (1 - (bestDistance/initialDistance))*100
 	bestRouteIndex = determineFitnessAndRank(pop)[0][0]
 	bestRoute = pop[bestRouteIndex]
 
-	return (initialDistance, bestRoute)
+	return (improvementPerc, bestRoute)
+
+#Initalise our constants
+MIN_SIZE = 300
+MAX_SIZE = 1800
+INCREMENT = 300
+POP_SIZE = 100
+ELITE_SIZE = 20
+MUTATION_RATE = 0.01
+GENERATIONS = 50
 
 #Create the graph, run the algorithm
-data = pd.DataFrame(columns=['j','time', 'initial length', 'length'])
+data = pd.DataFrame(columns=['j','time', 'length', 'improvement percentage'])
 i = 0
-for j in range(300, 1801, 300):
+for j in range(MIN_SIZE, MAX_SIZE, INCREMENT):
+	#For profiling purposes
+	profile = cProfile.Profile()
 	G = TSP.Graph(j, 'asymmetric')
+	profile.enable()
 	t0 = perf_counter()
-	initialDistance, route = GeneticAlgorithm(G, 100, 5, 0.01, 50)
+	improvementPerc, route = GeneticAlgorithm(G, POP_SIZE, ELITE_SIZE, MUTATION_RATE, GENERATIONS)
 	t1 = perf_counter()
+	profile.disable()
 	t = t1-t0
-	data.loc[i] = [j, t, initialDistance, TSP.cost(G, route)]
+	data.loc[i] = [j, t, TSP.cost(G, route), improvementPerc]
 	i += 1
 
-print(data)
+	#Output profiling info to a text file
+	with open('./GeneticAlgorithmProfiling.txt', 'a') as stream:
+		ps = pstats.Stats(profile, stream=stream)
+		ps.sort_stats('cumtime')
+		ps.print_stats(20)
+	
+#Output dataframe to another file
+data.to_csv('./GeneticAlgorithmOutput.csv', mode = 'w')
+
