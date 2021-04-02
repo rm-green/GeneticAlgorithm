@@ -174,7 +174,7 @@ def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, generations):
 #Create the graph, run the algorithm
 data = pd.DataFrame(columns=['j','time', 'initial length', 'length'])
 i = 0
-for j in range(10, 31, 10):
+for j in range(300, 1801, 300):
 	G = TSP.Graph(j, 'asymmetric')
 	t0 = perf_counter()
 	initialDistance, route = GeneticAlgorithm(G, 100, 5, 0.01, 50)
