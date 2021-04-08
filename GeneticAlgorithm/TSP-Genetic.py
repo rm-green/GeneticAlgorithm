@@ -54,18 +54,16 @@ def selection(popRanked, eliteSize):
 		#Add our n number of elite routes
 		selectionResults.append(popRanked[i][0])
 
-	#Randomly choose the remaining routes (THE ALGORITHM BOTTLENECKS HERE BECAUSE N^2)
-	# for i in range(0, len(popRanked) - eliteSize):
-	# 	pick = 100*np.random.random()
-	# 	for i in range(0, len(popRanked)):
-	# 		if pick <= df.iat[i,3]:
-	# 			selectionResults.append(popRanked[i][0])
-	# 			break
+	#Tournament selections
+	for i in range(0, len(popRanked) - eliteSize):
+		smaller, larger = sorted(random.sample(popRanked, 2))
+		selectionResults.append(larger[0])
+
 	
 	#ALTERNATIVE RANDOM SELECTION METHOD
-	for i in range(0, len(popRanked) - eliteSize):
-		pick = random.randint(0, len(popRanked))
-		selectionResults.append(popRanked[i][0])
+	# for i in range(0, len(popRanked) - eliteSize):
+	# 	pick = random.randint(0, len(popRanked))
+	# 	selectionResults.append(popRanked[i][0])
 	return selectionResults #An array of which indexes (from the original unsorted population) will be selected for mating
 
 def getMatingPool(pop, selectionResults):
@@ -78,80 +76,70 @@ def getMatingPool(pop, selectionResults):
 	return matingPool
 
 def breed(parent1, parent2):
+	lookup1 = lookup2 = {}
+	for i in range(len(parent1)):
+		lookup1[parent1[i]] = i
+	for i in range(len(parent2)):
+		lookup2[parent2[i]] = i
 
-	#Routes are constrained in that they must visit all routes exactly once
-	#Therefore we use "ordered crossover" to breed our routes
-	#This is causing a bottleneck is large graphs
-	#Maybe we should consider other ways to "breed" routes that have less time complexity
+	cycles = [-1 for i in range(len(parent1))]
+	cycleNumber = 1
+	cycleStart = (i for index, value in enumerate(cycles) if value < 0)
 
-	child = []
-	childParent1 = []
-	childParent2 = []
-
-	#Choose a random subset of the first route
-	gene1 = int(random.random() * len(parent1))
-	gene2 = int(random.random() * len(parent1))
-	start = min(gene1, gene2)
-	end = max(gene1, gene2)
-
-	#Take that subset and append it to a new array
-	for i in range(start, end):
-		childParent1.append(parent1[i])
+	for position in cycleStart:
+		while cycles[position] < 0:
+			cycles[position] = cycleNumber
+			position = lookup1[parent2[position]]
+		cycleNumber += 1
 	
-	#Take the order of the remaining vertices from the second route and append it to a separate array
-	childParent2 = [i for i in parent2 if i not in childParent1]
+	child1 = [parent1[i] if n%2 else parent2[i] for i, n in enumerate(cycles)]
+	child2 = [parent2[i] if n%2 else parent1[i] for i, n in enumerate(cycles)]
 
-	#Combine the two partial arrays to create a child
-	child = childParent1 + childParent2
+	return child1, child2
 
-	return child
-
-def breedPop(matingPool, eliteSize):
+def breedPop(matingPool, eliteSize, crossoverRate):
 	#Creates a new population from the mating pool
 	children = []
 	length = len(matingPool) - eliteSize
-
-	#Make a separate array containing the mating pool in random order
-	pool = random.sample(matingPool, len(matingPool))
 
 	#Automatically bring the elites into the next generation
 	#This ensures that future generations can only improve/never regress
 	for i in range(0, eliteSize):
 		children.append(matingPool[i])
 	
-	#Breed the mating pool (moving inwards from the start and end) and add to the next generation
-	for i in range(0, length):
-		child = breed(pool[i], pool[len(matingPool) - i - 1])
-		children.append(child)
+	#Breed the mating pool and add to the next generation
+	for i in range(0, length-1, 2):
+		if random.random() > crossoverRate:
+			child1, child2 = breed(matingPool[i][1:-1], matingPool[i+1][1:-1])
+			children.append([0] + child1 + [0])
+			children.append([0] + child2 + [0])
+		else:
+			children.append(matingPool[i])
+			children.append(matingPool[i+1])
 	
 	return children
 
-def mutate(route, mutationRate):
+def mutate(route):
 	#Use mutation - Each route has a chance to mutate (random swap of two routes) determined by mutationRate
 	#Potentially implement 2-opt or 3-opt here to see if larger mutations affect the algorithm
-	for swapped in range(len(route)):
-		if(random.random() < mutationRate):
-			swapWith = int(random.random() * len(route))
-
-			v1 = route[swapped]
-			v2 = route[swapWith]
-
-			route[swapped] = v2
-			route[swapWith] = v1
+	i, j = sorted(random.sample(range(1, len(route)-1), 2))
+	route[i:j] = route[j-1:i-1:-1]
 	
-	return route
-
-def mutatePop(population, mutationRate):
+def mutatePop(population, mutationRate, eliteSize):
 	#Iterates over an entire population and applies mutation
 	mutatedPop = []
 
-	for i in range(0, len(population)):
-		mutatedRoute = mutate(population[i], mutationRate)
-		mutatedPop.append(mutatedRoute)
+	for i in range(0, eliteSize):
+		mutatedPop.append(population[i])
+	
+	for i in range(0, len(population) - eliteSize):
+		if random.random() > mutationRate:
+			mutate(population[i]) #Mutate in place
+		mutatedPop.append(population[i])
 	
 	return mutatedPop
 
-def nextGeneration(currentGen, eliteSize, mutationRate):
+def nextGeneration(currentGen, eliteSize, mutationRate, crossoverRate):
 	'''
 	1. Determine fitness (route lengths)
 	2. Select mating pool (choose subset of routes)
@@ -161,19 +149,19 @@ def nextGeneration(currentGen, eliteSize, mutationRate):
 	rankedPop = determineFitnessAndRank(currentGen)
 	selectionResults = selection(rankedPop, eliteSize)
 	matingPool = getMatingPool(currentGen, selectionResults)
-	children = breedPop(matingPool, eliteSize) #Bottleneck occuring here
-	nextGen = mutatePop(children, mutationRate)
+	children = breedPop(matingPool, eliteSize, crossoverRate) #Bottleneck occuring here
+	nextGen = mutatePop(children, mutationRate, eliteSize)
 
 	return nextGen
 
-def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, generations):
+def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, crossoverRate, generations):
 	#Get initial population and best distance
 	pop = getInitialPop(G, popSize)
 	initialDistance = 1 / determineFitnessAndRank(pop)[0][1]
 
 	#Apply the algorithm
 	for i in range(0, generations):
-		pop = nextGeneration(pop, eliteSize, mutationRate)
+		pop = nextGeneration(pop, eliteSize, mutationRate, crossoverRate)
 		print(f'Gen {i} Complete')
 	
 	#Get our new best distance and route
@@ -186,13 +174,14 @@ def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, generations):
 	return (improvementPerc, bestRoute)
 
 #Initalise our constants
-MIN_SIZE = 300
-MAX_SIZE = 1800
-INCREMENT = 300
+MIN_SIZE = 100
+MAX_SIZE = 1000
+INCREMENT = 200
 POP_SIZE = 100
 ELITE_SIZE = 20
-MUTATION_RATE = 0.01
-GENERATIONS = 50
+MUTATION_RATE = 0.05
+CROSSOVER_RATE = 0.8
+GENERATIONS = 200
 
 FILENAME = f'GenAlg_pop={POP_SIZE}_elite={ELITE_SIZE}_mut={MUTATION_RATE}_gens={GENERATIONS}'
 
@@ -205,7 +194,7 @@ for j in range(MIN_SIZE, MAX_SIZE, INCREMENT):
 	G = TSP.Graph(j, 'asymmetric')
 	profile.enable()
 	t0 = perf_counter()
-	improvementPerc, route = GeneticAlgorithm(G, POP_SIZE, ELITE_SIZE, MUTATION_RATE, GENERATIONS)
+	improvementPerc, route = GeneticAlgorithm(G, POP_SIZE, ELITE_SIZE, MUTATION_RATE, CROSSOVER_RATE, GENERATIONS)
 	t1 = perf_counter()
 	profile.disable()
 	t = t1-t0
