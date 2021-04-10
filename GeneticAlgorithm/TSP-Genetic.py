@@ -61,7 +61,7 @@ def selection(popRanked, eliteSize):
 		selectionResults.append(popRanked[i][0])
 	
 	#Weighted roulette selections
-	max = sum([popRanked[i][1] for i in range(len(popRanked))])
+	max = df['cum_sum'].iloc[-1]
 	for i in range(len(popRanked) - eliteSize):
 		pick = random.uniform(0, max)
 		current = max
@@ -283,5 +283,6 @@ def testQualityVaryingGraphSizes(min = 10, max = 101, increment = 10, graphType 
 	plt.plot(result.index, result['quality'])
 	plt.show()
 
+testQualityVaryingGraphSizes(10, 21, 10)
 #TODO: Implement other quality tests
 #TODO: Move tests to separate file
