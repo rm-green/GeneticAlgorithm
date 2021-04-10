@@ -268,13 +268,30 @@ def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType =
 	plt.plot(result.index, result['greedy time'])
 	plt.show()
 
-#TODO: Implement these
-def testSpeedVaryingCrossoverRates():
-	return
-def testSpeedVaryingMutationRates():
-	return
-def testSpeedVaryingGenerations():
-	return
+#Added addtional test functions
+def testSpeedVaryingCrossoverRates(min=0.5, max=5, increment=0.1, graphType = "symmetric"):
+	frames = [testSpeedAgainstGreedy(graphType = graphType, crossoverRate = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('crossover rates').agg('mean', 'std')
+	plt.plot(result.index, result['genetic time'])
+	plt.plot(result.index, result['greedy time'])
+	plt.show()
+	
+def testSpeedVaryingMutationRates(min=0.2, max=2, increment=0.1, graphType = "symmetric"):
+	frames = [testSpeedAgainstGreedy(graphType = graphType, mutationRate = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('mutation rates').agg('mean', 'std')
+	plt.plot(result.index, result['genetic time'])
+	plt.plot(result.index, result['greedy time'])
+	plt.show()
+	
+def testSpeedVaryingGenerations(min=100, max=501, increment=50, graphType = "symmetric"):
+	frames = [testSpeedAgainstGreedy(graphType = graphType, generations = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('varying generations').agg('mean', 'std')
+	plt.plot(result.index, result['genetic time'])
+	plt.plot(result.index, result['greedy time'])
+	plt.show()
 
 def testQualityVaryingGraphSizes(min = 10, max = 101, increment = 10, graphType = "symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
