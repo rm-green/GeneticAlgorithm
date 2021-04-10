@@ -8,6 +8,8 @@ import cProfile
 import pstats
 import os
 import csv
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #TODO: Add timers and graphs
 #TODO: See how we can improve performance (8-9 seconds for graphs of size 10-30)
@@ -16,13 +18,17 @@ def getInitialPop(G, popSize):
 	#Create a random population (list) of individuals (routes)
 
 	pop = []
+
+	#We need routes that start and end at 0 so we fix them to the start and end
+	verts = G.vertices.copy()
+	verts.remove(0)
 	for i in range(popSize):
-		pop.append(np.random.permutation(G.vertices))
+		pop.append([0] + list(np.random.permutation(verts)) + [0])
 	
 	return pop
 
 
-def determineFitnessAndRank(pop):
+def determineFitnessAndRank(G, pop):
 
 	#Creates dictionary of {Route Index: Fitness Score} 
 	#Fitness score = reciprocal of route length
@@ -33,7 +39,7 @@ def determineFitnessAndRank(pop):
 	#Sorts the route indicies by fitness score
 	popRanked = sorted(fitnessResults.items(), key = operator.itemgetter(1), reverse = True)
 
-	return popRanked
+	return popRanked #array of tuples (index, score)
 
 def selection(popRanked, eliteSize):
 
@@ -53,17 +59,18 @@ def selection(popRanked, eliteSize):
 	for i in range(0, eliteSize):
 		#Add our n number of elite routes
 		selectionResults.append(popRanked[i][0])
-
-	#Tournament selections
-	for i in range(0, len(popRanked) - eliteSize):
-		smaller, larger = sorted(random.sample(popRanked, 2))
-		selectionResults.append(larger[0])
-
 	
-	#ALTERNATIVE RANDOM SELECTION METHOD
-	# for i in range(0, len(popRanked) - eliteSize):
-	# 	pick = random.randint(0, len(popRanked))
-	# 	selectionResults.append(popRanked[i][0])
+	#Weighted roulette selections
+	max = sum([popRanked[i][1] for i in range(len(popRanked))])
+	for i in range(len(popRanked) - eliteSize):
+		pick = random.uniform(0, max)
+		current = max
+		for chromosome in popRanked:
+			current -= chromosome[1]
+			if current < pick:
+				selectionResults.append(chromosome[0])
+				break
+	
 	return selectionResults #An array of which indexes (from the original unsorted population) will be selected for mating
 
 def getMatingPool(pop, selectionResults):
@@ -76,6 +83,9 @@ def getMatingPool(pop, selectionResults):
 	return matingPool
 
 def breed(parent1, parent2):
+	#Cycle Crossover method
+	#Uses a lookup table to reduce runtime (list.locate() is O(n), lookup is (O(1)))
+	#Preserves the start and end nodes (Good choice for our constraints)
 	lookup1 = lookup2 = {}
 	for i in range(len(parent1)):
 		lookup1[parent1[i]] = i
@@ -109,10 +119,10 @@ def breedPop(matingPool, eliteSize, crossoverRate):
 	
 	#Breed the mating pool and add to the next generation
 	for i in range(0, length-1, 2):
-		if random.random() > crossoverRate:
-			child1, child2 = breed(matingPool[i][1:-1], matingPool[i+1][1:-1])
-			children.append([0] + child1 + [0])
-			children.append([0] + child2 + [0])
+		if random.random() < crossoverRate:
+			child1, child2 = breed(matingPool[i], matingPool[i+1])
+			children.append(child1)
+			children.append(child2)
 		else:
 			children.append(matingPool[i])
 			children.append(matingPool[i+1])
@@ -120,8 +130,8 @@ def breedPop(matingPool, eliteSize, crossoverRate):
 	return children
 
 def mutate(route):
-	#Use mutation - Each route has a chance to mutate (random swap of two routes) determined by mutationRate
-	#Potentially implement 2-opt or 3-opt here to see if larger mutations affect the algorithm
+	#Reverses a random length section of the route
+	#The start and end nodes cannot be selected as part of this section
 	i, j = sorted(random.sample(range(1, len(route)-1), 2))
 	route[i:j] = route[j-1:i-1:-1]
 	
@@ -133,80 +143,145 @@ def mutatePop(population, mutationRate, eliteSize):
 		mutatedPop.append(population[i])
 	
 	for i in range(0, len(population) - eliteSize):
-		if random.random() > mutationRate:
+		if random.random() < mutationRate:
 			mutate(population[i]) #Mutate in place
 		mutatedPop.append(population[i])
 	
 	return mutatedPop
 
-def nextGeneration(currentGen, eliteSize, mutationRate, crossoverRate):
+def nextGeneration(G, currentGen, eliteSize, mutationRate, crossoverRate):
 	'''
 	1. Determine fitness (route lengths)
 	2. Select mating pool (choose subset of routes)
 	3. Breed (merge pairs of routes to create new routes)
 	4. Repeat
 	'''
-	rankedPop = determineFitnessAndRank(currentGen)
+	rankedPop = determineFitnessAndRank(G, currentGen)
 	selectionResults = selection(rankedPop, eliteSize)
 	matingPool = getMatingPool(currentGen, selectionResults)
-	children = breedPop(matingPool, eliteSize, crossoverRate) #Bottleneck occuring here
+	children = breedPop(matingPool, eliteSize, crossoverRate)
 	nextGen = mutatePop(children, mutationRate, eliteSize)
 
 	return nextGen
 
-def GeneticAlgorithm(G, popSize, eliteSize, mutationRate, crossoverRate, generations):
+#------------------------------------------------------#
+'''Runs the genetic algorithm over a given number of generations. Returns the best route, 
+	best cost, and an array containing best cost of each generation'''
+
+def GeneticAlgorithm(G, popSize = 200, eliteSize = 5, mutationRate = 0.2, crossoverRate = 0.85, generations = 500):
 	#Get initial population and best distance
 	pop = getInitialPop(G, popSize)
-	initialDistance = 1 / determineFitnessAndRank(pop)[0][1]
+	initialDistance = 1 / determineFitnessAndRank(G, pop)[0][1]
+	distanceHistory = {}
 
 	#Apply the algorithm
 	for i in range(0, generations):
-		pop = nextGeneration(pop, eliteSize, mutationRate, crossoverRate)
+		pop = nextGeneration(G, pop, eliteSize, mutationRate, crossoverRate)
 		print(f'Gen {i} Complete')
+		distanceHistory[i] = (1 / determineFitnessAndRank(G, pop)[0][1])
 	
 	#Get our new best distance and route
-	bestDistance = 1 / determineFitnessAndRank(pop)[0][1]
+	bestDistance = 1 / determineFitnessAndRank(G, pop)[0][1]
 	print(f"Initial Distance: {initialDistance} \nFinal Distance: {bestDistance}")
 	improvementPerc = (1 - (bestDistance/initialDistance))*100
-	bestRouteIndex = determineFitnessAndRank(pop)[0][0]
+	bestRouteIndex = determineFitnessAndRank(G, pop)[0][0]
 	bestRoute = pop[bestRouteIndex]
 
-	return (improvementPerc, bestRoute)
+	return (bestRoute, bestDistance, distanceHistory)
 
-#Initalise our constants
-MIN_SIZE = 100
-MAX_SIZE = 1000
-INCREMENT = 200
-POP_SIZE = 100
-ELITE_SIZE = 20
-MUTATION_RATE = 0.05
-CROSSOVER_RATE = 0.8
-GENERATIONS = 200
+#------------------------------------------------------#
+'''Produces a graph that shows the best route cost against the current generation number of the 
+	genetic algorithm alongside the greedy cost (so we can see how long it takes to become 
+	better than greedy)'''
 
-FILENAME = f'GenAlg_pop={POP_SIZE}_elite={ELITE_SIZE}_mut={MUTATION_RATE}_gens={GENERATIONS}'
+def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 500):
+	myG = TSP.Graph(n, graphType)
+	geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+	greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
+	greedyCosts = [greedyCost for i in range(generations)]
+	plt.figure(figsize=(15,5))
+	plt.plot(list(distanceHistory.keys()), list(distanceHistory.values()))
+	plt.plot(list(distanceHistory.keys()), greedyCosts)
+	print(f'Greedy Cost: {greedyCost}')	#Plot the result here
 
-#Create the graph, run the algorithm
-data = pd.DataFrame(columns=['j','time', 'length', 'improvement percentage'])
-i = 0
-for j in range(MIN_SIZE, MAX_SIZE, INCREMENT):
-	#For profiling purposes
-	profile = cProfile.Profile()
-	G = TSP.Graph(j, 'asymmetric')
-	profile.enable()
-	t0 = perf_counter()
-	improvementPerc, route = GeneticAlgorithm(G, POP_SIZE, ELITE_SIZE, MUTATION_RATE, CROSSOVER_RATE, GENERATIONS)
-	t1 = perf_counter()
-	profile.disable()
-	t = t1-t0
-	data.loc[i] = [j, t, TSP.cost(G, route), improvementPerc]
-	i += 1
+	print(f'Greedy Route: {greedyRoute}')
+	print(f'Genetic Cost: {geneticCost}')
+	print(f'Genetic Route: {geneticRoute}')
+	plt.show()
 
-	#Output profiling info to a text file
-	with open(f'./GeneticAlgorithm/GeneticProfilings/{FILENAME}_Profiling.txt', 'a+') as stream:
-		ps = pstats.Stats(profile, stream=stream)
-		ps.sort_stats('cumtime')
-		ps.print_stats(20)
+#------------------------------------------------------#
+#------------------------------------------------------#
+
+'''These two functions run the genetic algorithm and greedy algorithm on a graph for a number of 
+repetitions and returns the average time taken and route quality in a Panda DataFrame'''
+
+def testSpeedAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy time', 'genetic time'])
+	i = 0
+	for _ in range(repetitions):
+		myG = TSP.Graph(n, graphType)
+		t0 = perf_counter()
+		greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
+		t1 = perf_counter()
+		greedyTime = t1 - t0
+		t0 = perf_counter()
+		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+		t1 = perf_counter()
+		geneticTime = t1-t0
+		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyTime, geneticTime]
+		i += 1
 	
-#Output dataframe to another file
-data.to_csv(f'./GeneticAlgorithm/GeneticOutputs/{FILENAME}_Output.csv', mode = 'w')
+	return data
+		
+def testQualityAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'genetic cost', 'quality'])
+	i = 0
+	
+	for _ in range(repetitions):
+		myG = TSP.Graph(n, graphType)
+		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+		greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
+		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyCost, geneticCost, 1 / (geneticCost/greedyCost)]
+		i += 1
+	
+	return data
 
+#------------------------------------------------------#
+#------------------------------------------------------#
+
+'''Test functions: Use these or just copy/paste the body into the notebook 
+and plug in n, min, max, and increment. Plotting could be improved'''
+
+def testSpeedVaryingGraphSizes(min = 10, max = 301, increment = 50, graphType = "symmetric"):
+	frames = [testSpeedAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('n').agg('mean', 'std')
+	plt.plot(result.index, result['genetic time'])
+	plt.plot(result.index, result['greedy time'])
+	plt.show()
+
+def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType = "symmetric"):
+	frames = [testSpeedAgainstGreedy(graphType = graphType, popSize = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('population size').agg('mean', 'std')
+	plt.plot(result.index, result['genetic time'])
+	plt.plot(result.index, result['greedy time'])
+	plt.show()
+
+#TODO: Implement these
+def testSpeedVaryingCrossoverRates():
+	return
+def testSpeedVaryingMutationRates():
+	return
+def testSpeedVaryingGenerations():
+	return
+
+def testQualityVaryingGraphSizes(min = 10, max = 101, increment = 10, graphType = "symmetric"):
+	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('n').agg('mean', 'std')
+	plt.plot(result.index, result['quality'])
+	plt.show()
+
+#TODO: Implement other quality tests
+#TODO: Move tests to separate file

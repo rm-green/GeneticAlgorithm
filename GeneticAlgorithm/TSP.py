@@ -129,4 +129,4 @@ def greedy_nearest_neighbour(G):
 		visited.append(city)
 		unvisited.remove(city)
 		city = nearest_city
-	return (visited, cost(G, visited+[0]))
+	return (visited+ [0], cost(G, visited+[0]))
