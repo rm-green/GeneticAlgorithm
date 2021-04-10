@@ -142,7 +142,7 @@ def mutatePop(population, mutationRate, eliteSize):
 	for i in range(0, eliteSize):
 		mutatedPop.append(population[i])
 	
-	for i in range(0, len(population) - eliteSize):
+	for i in range(eliteSize, len(population)-1):
 		if random.random() < mutationRate:
 			mutate(population[i]) #Mutate in place
 		mutatedPop.append(population[i])
