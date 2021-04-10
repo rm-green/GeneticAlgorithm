@@ -252,7 +252,7 @@ def testQualityAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", p
 '''Test functions: Use these or just copy/paste the body into the notebook 
 and plug in n, min, max, and increment. Plotting could be improved'''
 
-def testSpeedVaryingGraphSizes(min = 10, max = 301, increment = 50, graphType = "symmetric"):
+def testSpeedVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
 	result = concatenatedFrames.groupby('n').agg('mean', 'std')
@@ -269,37 +269,61 @@ def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType =
 	plt.show()
 
 #Added addtional test functions
-def testSpeedVaryingCrossoverRates(min=0.5, max=5, increment=0.1, graphType = "symmetric"):
+def testSpeedVaryingCrossoverRates(min=0.2, max=1, increment=0.1, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, crossoverRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('crossover rates').agg('mean', 'std')
+	result = concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
 	plt.plot(result.index, result['genetic time'])
 	plt.plot(result.index, result['greedy time'])
 	plt.show()
 	
-def testSpeedVaryingMutationRates(min=0.2, max=2, increment=0.1, graphType = "symmetric"):
+def testSpeedVaryingMutationRates(min=0.2, max=1, increment=0.1, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, mutationRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('mutation rates').agg('mean', 'std')
+	result = concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
 	plt.plot(result.index, result['genetic time'])
 	plt.plot(result.index, result['greedy time'])
 	plt.show()
 	
-def testSpeedVaryingGenerations(min=100, max=501, increment=50, graphType = "symmetric"):
+def testSpeedVaryingGenerations(min=100, max=501, increment=100, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, generations = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('varying generations').agg('mean', 'std')
+	result = concatenatedFrames.groupby('generations').agg('mean', 'std')
 	plt.plot(result.index, result['genetic time'])
 	plt.plot(result.index, result['greedy time'])
 	plt.show()
 
-def testQualityVaryingGraphSizes(min = 10, max = 101, increment = 10, graphType = "symmetric"):
+def testQualityVaryingGraphSizes(min=10, max=101, increment=10, graphType="symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
 	result = concatenatedFrames.groupby('n').agg('mean', 'std')
 	plt.plot(result.index, result['quality'])
 	plt.show()
 
-testQualityVaryingGraphSizes(10, 21, 10)
-#TODO: Implement other quality tests
-#TODO: Move tests to separate file
+def testQualityVaryingPopulationSize(min=100, max=501, increment=100, graphType = "symmetric"):
+	frames = [testQualityAgainstGreedy(graphType = graphType, popSize = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('population size').agg('mean', 'std')
+	plt.plot(result.index, result['quality'])
+	plt.show()
+
+def testQualityVaryingCrossoverRate(min=0.2, max=1, increment=0.1, graphType="symmetric"):
+	frames = [testQualityAgainstGreedy(graphType = graphType, crossoverRate = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
+	plt.plot(result.index, result['quality'])
+	plt.show()
+
+def testQualityVaryingMutationRate(min=0.2, max=1, increment=0.1, graphType="symmetric"):
+	frames = [testQualityAgainstGreedy(graphType = graphType, mutationRate= = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
+	plt.plot(result.index, result['quality'])
+	plt.show()
+
+def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="symmetric"):
+	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
+	concatenatedFrames = pd.concat(frames)
+	result = concatenatedFrames.groupby('generations').agg('mean', 'std')
+	plt.plot(result.index, result['quality'])
+	plt.show()
