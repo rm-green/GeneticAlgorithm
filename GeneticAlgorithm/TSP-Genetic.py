@@ -219,7 +219,7 @@ def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 300, mutationRate
 '''These two functions run the genetic algorithm and greedy algorithm on a graph for a number of 
 repetitions and returns the average time taken and route quality in a Panda DataFrame'''
 
-def testSpeedAgainstGreedy(repetitions = 2, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testSpeedAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy time', 'genetic time'])
 	i = 0
 	for _ in range(repetitions):
@@ -237,7 +237,7 @@ def testSpeedAgainstGreedy(repetitions = 2, n = 50, graphType = "symmetric", pop
 	
 	return data
 		
-def testQualityAgainstGreedy(repetitions = 2, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testQualityAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'genetic cost', 'quality'])
 	i = 0
 	
