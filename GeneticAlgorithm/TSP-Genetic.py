@@ -168,8 +168,12 @@ def nextGeneration(G, currentGen, eliteSize, mutationRate, crossoverRate):
 '''Runs the genetic algorithm over a given number of generations. Returns the best route, 
 	best cost, and an array containing best cost of each generation'''
 
-def GeneticAlgorithm(G, popSize = 200, eliteSize = 5, mutationRate = 0.2, crossoverRate = 0.85, generations = 500):
+def GeneticAlgorithm(G, popSize = 200, mutationRate = 0.2, crossoverRate = 0.85, generations = 500):
 	#Get initial population and best distance
+	if popSize*0.05 < 1: 
+		eliteSize = 1
+	else:
+		eliteSize = int(popSize*0.05)
 	pop = getInitialPop(G, popSize)
 	initialDistance = 1 / determineFitnessAndRank(G, pop)[0][1]
 	distanceHistory = {}
@@ -194,9 +198,9 @@ def GeneticAlgorithm(G, popSize = 200, eliteSize = 5, mutationRate = 0.2, crosso
 	genetic algorithm alongside the greedy cost (so we can see how long it takes to become 
 	better than greedy)'''
 
-def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 500):
+def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 500):
 	myG = TSP.Graph(n, graphType)
-	geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+	geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, mutationRate, crossoverRate, generations)
 	greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
 	greedyCosts = [greedyCost for i in range(generations)]
 	plt.figure(figsize=(15,5))
@@ -215,7 +219,7 @@ def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, eliteSize = 
 '''These two functions run the genetic algorithm and greedy algorithm on a graph for a number of 
 repetitions and returns the average time taken and route quality in a Panda DataFrame'''
 
-def testSpeedAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testSpeedAgainstGreedy(repetitions = 3, n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy time', 'genetic time'])
 	i = 0
 	for _ in range(repetitions):
@@ -225,7 +229,7 @@ def testSpeedAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", pop
 		t1 = perf_counter()
 		greedyTime = t1 - t0
 		t0 = perf_counter()
-		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, mutationRate, crossoverRate, generations)
 		t1 = perf_counter()
 		geneticTime = t1-t0
 		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyTime, geneticTime]
@@ -233,13 +237,13 @@ def testSpeedAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", pop
 	
 	return data
 		
-def testQualityAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, eliteSize = 10, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testQualityAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'genetic cost', 'quality'])
 	i = 0
 	
 	for _ in range(repetitions):
 		myG = TSP.Graph(n, graphType)
-		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, eliteSize, mutationRate, crossoverRate, generations)
+		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, mutationRate, crossoverRate, generations)
 		greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
 		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyCost, geneticCost, 1 / (geneticCost/greedyCost)]
 		i += 1
@@ -264,8 +268,10 @@ def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType =
 	frames = [testSpeedAgainstGreedy(graphType = graphType, popSize = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
 	result = concatenatedFrames.groupby('population size').agg('mean', 'std')
-	plt.plot(result.index, result['genetic time'])
-	plt.plot(result.index, result['greedy time'])
+	fig, genetic = plt.subplots(figsize=(12,6))
+	sns.lineplot(data = result, x = 'population size', y = 'genetic time', ci = 'sd', ax=genetic)
+	sns.scatterplot(data = result, x = 'population size', y = 'genetic time', alpha = 0.3, ax=genetic)
+	# plt.plot(result.index, result['greedy time'])
 	plt.show()
 
 #Added addtional test functions
@@ -315,7 +321,7 @@ def testQualityVaryingCrossoverRate(min=0.2, max=1, increment=0.1, graphType="sy
 	plt.show()
 
 def testQualityVaryingMutationRate(min=0.2, max=1, increment=0.1, graphType="symmetric"):
-	frames = [testQualityAgainstGreedy(graphType = graphType, mutationRate= = n) for n in range(min, max, increment)]
+	frames = [testQualityAgainstGreedy(graphType = graphType, mutationRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
 	result = concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
 	plt.plot(result.index, result['quality'])
