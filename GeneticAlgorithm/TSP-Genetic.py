@@ -237,15 +237,21 @@ def testSpeedAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", po
 	
 	return data
 		
-def testQualityAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
-	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'genetic cost', 'quality'])
+def testAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'greedy time', 'genetic cost', 'genetic time', 'quality'])
 	i = 0
 	
 	for _ in range(repetitions):
 		myG = TSP.Graph(n, graphType)
+		t0 = perf_counter()
 		geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, mutationRate, crossoverRate, generations)
+		t1 = perf_counter()
+		geneticTime = t1 - t0
+		t0 = perf_counter()
 		greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
-		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyCost, geneticCost, 1 / (geneticCost/greedyCost)]
+		t1 = perf_counter()
+		greedyTime = t1 - t0
+		data.loc[i] = [n, popSize, mutationRate, crossoverRate, generations, greedyCost, greedyTime, geneticCost, geneticTime, 1 / (geneticCost/greedyCost)]
 		i += 1
 	
 	return data
@@ -256,18 +262,22 @@ def testQualityAgainstGreedy(repetitions = 10, n = 50, graphType = "symmetric", 
 '''Test functions: Use these or just copy/paste the body into the notebook 
 and plug in n, min, max, and increment. Plotting could be improved'''
 
-def testSpeedVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symmetric"):
-	frames = [testSpeedAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
+def testVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symmetric"):
+	frames = [testAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
 	concatenatedFrames.groupby('n').agg('mean', 'std')
 
 	#Graphs are plotted below
-	fig, genetic = plt.subplots(figsize=(12,6))
-	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
-	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('Genetic Algorithm speed vs Graph Size')
-	plt.xlabel('Graph Size')
-	plt.ylabel('Time (s)')
+	fig, (time, quality) = plt.subplots(nrows = 1, ncols = 2, figsize=(12,6))
+	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'genetic time', ci = 'sd', color='blue', ax=time)
+	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'genetic time', alpha = 0.3, ax=time)
+	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'quality', ci='sd', ax=quality)
+	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'quality', alpha = 0.3, ax=quality)
+
+	time.title.set_text('Genetic Algorithm Time vs Graph Size')
+	quality.title.set_text('Genetic Algorithm Quality vs Graph Size')
+	time.set_ylabel('Time taken (s)')
+	quality.set_ylabel('Quality')
 	plt.show()
 
 def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType = "symmetric"):
@@ -401,7 +411,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 #TEST GRAPH SPEED AND QUALITY WHEN VARYING GRAPH SIZE
 #testSpeedVaryingGraphSizes(10, 101, 10)
-# testQualityVaryingGraphSizes(10, 101, 10)
+testVaryingGraphSizes(10, 31, 10)
 
 #TEST FOR LARGE GRAPHS
 #testSpeedVaryingGraphSizes(200, 1001, 200)
@@ -409,7 +419,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 #TEST VARYING POPULATION SIZES
 # testSpeedVaryingPopulationSizes(100, 1001, 200)
-testQualityVaryingPopulationSize(100, 1001, 200)
+# testQualityVaryingPopulationSize(100, 1001, 200)
 
 #TEST VARYING CROSSOVER RATES
 # testSpeedVaryingCrossoverRates(0.1, 1, 0.1)
