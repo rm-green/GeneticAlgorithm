@@ -398,3 +398,33 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
+
+#TEST GRAPH SPEED AND QUALITY WHEN VARYING GRAPH SIZE
+#testSpeedVaryingGraphSizes(10, 101, 10)
+#testQualityVaryingGraphSizes(10, 101, 10)
+
+#TEST FOR LARGE GRAPHS
+#testSpeedVaryingGraphSizes(200, 1001, 200)
+#testQualityVaryingGraphSizes(200, 1001, 200)
+
+#TEST VARYING POPULATION SIZES
+# testSpeedVaryingPopulationSizes(100, 1001, 200)
+# testQualityVaryingPopulationSize(100, 1001, 200)
+
+#TEST VARYING CROSSOVER RATES
+# testSpeedVaryingCrossoverRates(0.1, 1, 0.1)
+# testQualityVaryingCrossoverRate(0.1, 1, 0.1)
+
+#TEST VARYING MUTATION RATES
+# testSpeedVaryingMutationRates(0.1, 1, 0.1)
+# testQualityVaryingMutationRate(0.1, 1, 0.1)
+
+#TEST VARYING GENERATION COUNT
+# testSpeedVaryingGenerations(100, 501, 100)
+# testQualityVaryingGenerations(100, 501, 100)
+
+#TEST AGAINST DIFFERENT GRAPH TYPES
+# testQualityVaryingGraphSizes(10, 101, 10)
+# testQualityVaryingGraphSizes(10, 101, 10, graphType="asymmetric")
+# testQualityVaryingGraphSizes(10, 101, 10, graphType="euclidean")
+# testQualityVaryingGraphSizes(10, 101, 10, graphType="easy")
