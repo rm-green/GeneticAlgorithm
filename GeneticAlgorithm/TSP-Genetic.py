@@ -265,7 +265,7 @@ def testSpeedVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symme
 	fig, genetic = plt.subplots(figsize=(12,6))
 	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
 	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('GA speed vs Graph Size')
+	plt.title('Genetic Algorithm speed vs Graph Size')
 	plt.xlabel('Graph Size')
 	plt.ylabel('Time (s)')
 	plt.show()
@@ -279,7 +279,7 @@ def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType =
 	fig, genetic = plt.subplots(figsize=(12,6))
 	sns.lineplot(data = concatenatedFrames, x = 'population size', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
 	sns.scatterplot(data = concatenatedFrames, x = 'population size', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('GA speed vs Population Size')
+	plt.title('Genetic Algorithm speed vs Population Size')
 	plt.xlabel('Population Size')
 	plt.ylabel('Time (s)')
 	plt.show()
@@ -294,7 +294,7 @@ def testSpeedVaryingCrossoverRates(min=0.2, max=1, increment=0.1, graphType = "s
 	fig, genetic = plt.subplots(figsize=(12,6))
 	sns.lineplot(data = concatenatedFrames, x = 'crossover rate', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
 	sns.scatterplot(data = concatenatedFrames, x = 'crossover rate', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('GA speed vs Crossover Rate')
+	plt.title('Genetic Algorithm speed vs Crossover Rate')
 	plt.xlabel('Crossover Rate')
 	plt.ylabel('Time (s)')
 	plt.show()
@@ -308,7 +308,7 @@ def testSpeedVaryingMutationRates(min=0.2, max=1, increment=0.1, graphType = "sy
 	fig, genetic = plt.subplots(figsize=(12,6))
 	sns.lineplot(data = concatenatedFrames, x = 'mutation rate', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
 	sns.scatterplot(data = concatenatedFrames, x = 'mutation rate', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('GA speed vs Mutation Rate')
+	plt.title('Genetic Algorithm speed vs Mutation Rate')
 	plt.xlabel('Mutation Rate')
 	plt.ylabel('Time (s)')
 	plt.show()
@@ -322,7 +322,7 @@ def testSpeedVaryingGenerations(min=100, max=501, increment=100, graphType = "sy
 	fig, genetic = plt.subplots(figsize=(12,6))
 	sns.lineplot(data = concatenatedFrames, x = 'generations', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
 	sns.scatterplot(data = concatenatedFrames, x = 'generations', y = 'genetic time', alpha = 0.3, ax=genetic)
-	plt.title('GA speed vs Generation Count')
+	plt.title('Genetic Algorithm speed vs Generation Count')
 	plt.xlabel('Generation Count')
 	plt.ylabel('Time (s)')
 	plt.show()
@@ -335,7 +335,7 @@ def testQualityVaryingGraphSizes(min=10, max=101, increment=10, graphType="symme
 
 	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'quality', alpha=0.3, ax=ax)
 	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'quality', ci='sd', ax=ax)
-	plt.title('GA Quality against Greedy vs Graph Size')
+	plt.title('Genetic Algorithm Quality vs Graph Size')
 	plt.xlabel('Graph Size')
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
@@ -350,7 +350,7 @@ def testQualityVaryingPopulationSize(min=100, max=501, increment=100, graphType 
 
 	sns.scatterplot(data = concatenatedFrames, x = 'population size', y = 'quality', alpha=0.3, ax=ax)
 	sns.lineplot(data = concatenatedFrames, x = 'population size', y = 'quality', ci='sd', ax=ax)
-	plt.title('GA Quality against Greedy vs Population Size')
+	plt.title('Genetic Algorithm Quality vs Population Size')
 	plt.xlabel('Population Size')
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
@@ -364,7 +364,7 @@ def testQualityVaryingCrossoverRate(min=0.2, max=1, increment=0.1, graphType="sy
 	
 	sns.scatterplot(data = concatenatedFrames, x = 'crossover rate', y = 'quality', alpha=0.3, ax=ax)
 	sns.lineplot(data = concatenatedFrames, x = 'crossover rate', y = 'quality', ci='sd', ax=ax)
-	plt.title('GA Quality against Greedy vs Crossover Rate')
+	plt.title('Genetic Algorithm Quality vs Crossover Rate')
 	plt.xlabel('Crossover Rate')
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
@@ -378,7 +378,7 @@ def testQualityVaryingMutationRate(min=0.2, max=1, increment=0.1, graphType="sym
 	concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
 	sns.scatterplot(data = concatenatedFrames, x = 'mutation rate', y = 'quality', alpha=0.3, ax=ax)
 	sns.lineplot(data = concatenatedFrames, x = 'mutation rate', y = 'quality', ci='sd', ax=ax)
-	plt.title('GA Quality against Greedy vs Mutation Rate')
+	plt.title('Genetic Algorithm Quality vs Mutation Rate')
 	plt.xlabel('Mutation Rate')
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
@@ -393,7 +393,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 	sns.scatterplot(data = concatenatedFrames, x = 'generations', y = 'quality', alpha=0.3, ax=ax)
 	sns.lineplot(data = concatenatedFrames, x = 'generations', y = 'quality', ci='sd', ax=ax)
-	plt.title('GA Quality against Greedy vs Generation Count')
+	plt.title('Genetic Algorithm Quality vs Generation Count')
 	plt.xlabel('Generation Count')
 	plt.ylabel('Quality')
 	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
@@ -401,7 +401,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 #TEST GRAPH SPEED AND QUALITY WHEN VARYING GRAPH SIZE
 #testSpeedVaryingGraphSizes(10, 101, 10)
-#testQualityVaryingGraphSizes(10, 101, 10)
+# testQualityVaryingGraphSizes(10, 101, 10)
 
 #TEST FOR LARGE GRAPHS
 #testSpeedVaryingGraphSizes(200, 1001, 200)
@@ -409,7 +409,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 #TEST VARYING POPULATION SIZES
 # testSpeedVaryingPopulationSizes(100, 1001, 200)
-# testQualityVaryingPopulationSize(100, 1001, 200)
+testQualityVaryingPopulationSize(100, 1001, 200)
 
 #TEST VARYING CROSSOVER RATES
 # testSpeedVaryingCrossoverRates(0.1, 1, 0.1)
