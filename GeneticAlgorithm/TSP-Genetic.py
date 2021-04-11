@@ -168,7 +168,7 @@ def nextGeneration(G, currentGen, eliteSize, mutationRate, crossoverRate):
 '''Runs the genetic algorithm over a given number of generations. Returns the best route, 
 	best cost, and an array containing best cost of each generation'''
 
-def GeneticAlgorithm(G, popSize = 200, mutationRate = 0.2, crossoverRate = 0.85, generations = 500):
+def GeneticAlgorithm(G, popSize = 300, mutationRate = 0.3, crossoverRate = 0.85, generations = 500):
 	#Get initial population and best distance
 	if popSize*0.05 < 1: 
 		eliteSize = 1
@@ -198,7 +198,7 @@ def GeneticAlgorithm(G, popSize = 200, mutationRate = 0.2, crossoverRate = 0.85,
 	genetic algorithm alongside the greedy cost (so we can see how long it takes to become 
 	better than greedy)'''
 
-def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 500):
+def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.3, crossoverRate = 0.85, generations = 300):
 	myG = TSP.Graph(n, graphType)
 	geneticRoute, geneticCost, distanceHistory = GeneticAlgorithm(myG, popSize, mutationRate, crossoverRate, generations)
 	greedyRoute, greedyCost = TSP.greedy_nearest_neighbour(myG)
@@ -219,7 +219,7 @@ def ConvergenceTest(n = 50, graphType = "symmetric", popSize = 200, mutationRate
 '''These two functions run the genetic algorithm and greedy algorithm on a graph for a number of 
 repetitions and returns the average time taken and route quality in a Panda DataFrame'''
 
-def testSpeedAgainstGreedy(repetitions = 3, n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testSpeedAgainstGreedy(repetitions = 2, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy time', 'genetic time'])
 	i = 0
 	for _ in range(repetitions):
@@ -237,7 +237,7 @@ def testSpeedAgainstGreedy(repetitions = 3, n = 50, graphType = "symmetric", pop
 	
 	return data
 		
-def testQualityAgainstGreedy(repetitions = 5, n = 50, graphType = "symmetric", popSize = 200, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
+def testQualityAgainstGreedy(repetitions = 2, n = 50, graphType = "symmetric", popSize = 300, mutationRate = 0.4, crossoverRate = 0.85, generations = 300):
 	data = pd.DataFrame(columns=['n', 'population size', 'mutation rate', 'crossover rate', 'generations', 'greedy cost', 'genetic cost', 'quality'])
 	i = 0
 	
@@ -259,77 +259,142 @@ and plug in n, min, max, and increment. Plotting could be improved'''
 def testSpeedVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('n').agg('mean', 'std')
-	plt.plot(result.index, result['genetic time'])
-	plt.plot(result.index, result['greedy time'])
+	concatenatedFrames.groupby('n').agg('mean', 'std')
+
+	#Graphs are plotted below
+	fig, genetic = plt.subplots(figsize=(12,6))
+	sns.lineplot(data = concatenatedFrames, x = 'graph size', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'graph size', y = 'genetic time', alpha = 0.3, ax=genetic)
+	plt.title('GA speed vs Graph Size')
+	plt.xlabel('Graph Size')
+	plt.ylabel('Time (s)')
 	plt.show()
 
 def testSpeedVaryingPopulationSizes(min=100, max=501, increment=100, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, popSize = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('population size').agg('mean', 'std')
+	concatenatedFrames.groupby('population size').agg(['mean', 'std'])
+
+	#Graphs are plotted below
 	fig, genetic = plt.subplots(figsize=(12,6))
-	sns.lineplot(data = result, x = 'population size', y = 'genetic time', ci = 'sd', ax=genetic)
-	sns.scatterplot(data = result, x = 'population size', y = 'genetic time', alpha = 0.3, ax=genetic)
-	# plt.plot(result.index, result['greedy time'])
+	sns.lineplot(data = concatenatedFrames, x = 'population size', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'population size', y = 'genetic time', alpha = 0.3, ax=genetic)
+	plt.title('GA speed vs Population Size')
+	plt.xlabel('Population Size')
+	plt.ylabel('Time (s)')
 	plt.show()
 
 #Added addtional test functions
 def testSpeedVaryingCrossoverRates(min=0.2, max=1, increment=0.1, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, crossoverRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
-	plt.plot(result.index, result['genetic time'])
-	plt.plot(result.index, result['greedy time'])
+	concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
+
+	#Graphs are plotted below
+	fig, genetic = plt.subplots(figsize=(12,6))
+	sns.lineplot(data = concatenatedFrames, x = 'crossover rate', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'crossover rate', y = 'genetic time', alpha = 0.3, ax=genetic)
+	plt.title('GA speed vs Crossover Rate')
+	plt.xlabel('Crossover Rate')
+	plt.ylabel('Time (s)')
 	plt.show()
 	
 def testSpeedVaryingMutationRates(min=0.2, max=1, increment=0.1, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, mutationRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
-	plt.plot(result.index, result['genetic time'])
-	plt.plot(result.index, result['greedy time'])
+	concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
+	
+	#Graphs are plotted below
+	fig, genetic = plt.subplots(figsize=(12,6))
+	sns.lineplot(data = concatenatedFrames, x = 'mutation rate', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'mutation rate', y = 'genetic time', alpha = 0.3, ax=genetic)
+	plt.title('GA speed vs Mutation Rate')
+	plt.xlabel('Mutation Rate')
+	plt.ylabel('Time (s)')
 	plt.show()
 	
 def testSpeedVaryingGenerations(min=100, max=501, increment=100, graphType = "symmetric"):
 	frames = [testSpeedAgainstGreedy(graphType = graphType, generations = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('generations').agg('mean', 'std')
-	plt.plot(result.index, result['genetic time'])
-	plt.plot(result.index, result['greedy time'])
-	plt.show()
+	concatenatedFrames.groupby('generations').agg('mean', 'std')
 
+	#Graphs are plotted below
+	fig, genetic = plt.subplots(figsize=(12,6))
+	sns.lineplot(data = concatenatedFrames, x = 'generations', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'generations', y = 'genetic time', alpha = 0.3, ax=genetic)
+	plt.title('GA speed vs Generation Count')
+	plt.xlabel('Generation Count')
+	plt.ylabel('Time (s)')
+	plt.show()
+	
 def testQualityVaryingGraphSizes(min=10, max=101, increment=10, graphType="symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('n').agg('mean', 'std')
-	plt.plot(result.index, result['quality'])
+	concatenatedFrames.groupby('n').agg('mean', 'std')
+	fig, ax = plt.subplots(figsize=(12, 6))
+
+	sns.scatterplot(data = concatenatedFrames, x = 'graph size', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'graph size', y = 'quality', ci='sd', ax=ax)
+	plt.title('GA Quality against Greedy vs Graph Size')
+	plt.xlabel('Graph Size')
+	plt.ylabel('Quality')
+	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
+
 
 def testQualityVaryingPopulationSize(min=100, max=501, increment=100, graphType = "symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, popSize = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('population size').agg('mean', 'std')
-	plt.plot(result.index, result['quality'])
+	concatenatedFrames.groupby('population size').agg('mean', 'std')
+	fig, ax = plt.subplots(figsize=(12, 6))
+
+	sns.scatterplot(data = concatenatedFrames, x = 'population size', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'population size', y = 'quality', ci='sd', ax=ax)
+	plt.title('GA Quality against Greedy vs Population Size')
+	plt.xlabel('Population Size')
+	plt.ylabel('Quality')
+	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
 
 def testQualityVaryingCrossoverRate(min=0.2, max=1, increment=0.1, graphType="symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, crossoverRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
-	plt.plot(result.index, result['quality'])
+	concatenatedFrames.groupby('crossover rate').agg('mean', 'std')
+	fig, ax = plt.subplots(figsize=(12, 6))
+	
+	sns.scatterplot(data = concatenatedFrames, x = 'crossover rate', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'crossover rate', y = 'quality', ci='sd', ax=ax)
+	plt.title('GA Quality against Greedy vs Crossover Rate')
+	plt.xlabel('Crossover Rate')
+	plt.ylabel('Quality')
+	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
 
 def testQualityVaryingMutationRate(min=0.2, max=1, increment=0.1, graphType="symmetric"):
 	frames = [testQualityAgainstGreedy(graphType = graphType, mutationRate = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
-	plt.plot(result.index, result['quality'])
+	fig, ax = plt.subplots(figsize=(12, 6))
+
+	concatenatedFrames.groupby('mutation rate').agg('mean', 'std')
+	sns.scatterplot(data = concatenatedFrames, x = 'mutation rate', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'mutation rate', y = 'quality', ci='sd', ax=ax)
+	plt.title('GA Quality against Greedy vs Mutation Rate')
+	plt.xlabel('Mutation Rate')
+	plt.ylabel('Quality')
+	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
 
 def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="symmetric"):
-	frames = [testQualityAgainstGreedy(graphType = graphType, n = n) for n in range(min, max, increment)]
+	frames = [testQualityAgainstGreedy(graphType = graphType, generations = n) for n in range(min, max, increment)]
 	concatenatedFrames = pd.concat(frames)
-	result = concatenatedFrames.groupby('generations').agg('mean', 'std')
-	plt.plot(result.index, result['quality'])
+	concatenatedFrames.groupby('generations').agg('mean', 'std')
+	print(concatenatedFrames)
+	fig, ax = plt.subplots(figsize=(12, 6))
+
+	sns.scatterplot(data = concatenatedFrames, x = 'generations', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'generations', y = 'quality', ci='sd', ax=ax)
+	plt.title('GA Quality against Greedy vs Generation Count')
+	plt.xlabel('Generation Count')
+	plt.ylabel('Quality')
+	plt.axhline(y=1, color='black', linestyle = '-', label = 'Greedy Quality')
 	plt.show()
