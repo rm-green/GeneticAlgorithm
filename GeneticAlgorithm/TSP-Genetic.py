@@ -411,7 +411,7 @@ def testQualityVaryingGenerations(min=100, max=501, increment=100, graphType="sy
 
 #TEST GRAPH SPEED AND QUALITY WHEN VARYING GRAPH SIZE
 #testSpeedVaryingGraphSizes(10, 101, 10)
-testVaryingGraphSizes(10, 31, 10)
+#testVaryingGraphSizes(10, 31, 10)
 
 #TEST FOR LARGE GRAPHS
 #testSpeedVaryingGraphSizes(200, 1001, 200)
