@@ -263,8 +263,8 @@ def testSpeedVaryingGraphSizes(min=10, max=301, increment=50, graphType = "symme
 
 	#Graphs are plotted below
 	fig, genetic = plt.subplots(figsize=(12,6))
-	sns.lineplot(data = concatenatedFrames, x = 'graph size', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
-	sns.scatterplot(data = concatenatedFrames, x = 'graph size', y = 'genetic time', alpha = 0.3, ax=genetic)
+	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'genetic time', ci = 'sd', color='blue', ax=genetic)
+	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'genetic time', alpha = 0.3, ax=genetic)
 	plt.title('GA speed vs Graph Size')
 	plt.xlabel('Graph Size')
 	plt.ylabel('Time (s)')
@@ -333,8 +333,8 @@ def testQualityVaryingGraphSizes(min=10, max=101, increment=10, graphType="symme
 	concatenatedFrames.groupby('n').agg('mean', 'std')
 	fig, ax = plt.subplots(figsize=(12, 6))
 
-	sns.scatterplot(data = concatenatedFrames, x = 'graph size', y = 'quality', alpha=0.3, ax=ax)
-	sns.lineplot(data = concatenatedFrames, x = 'graph size', y = 'quality', ci='sd', ax=ax)
+	sns.scatterplot(data = concatenatedFrames, x = 'n', y = 'quality', alpha=0.3, ax=ax)
+	sns.lineplot(data = concatenatedFrames, x = 'n', y = 'quality', ci='sd', ax=ax)
 	plt.title('GA Quality against Greedy vs Graph Size')
 	plt.xlabel('Graph Size')
 	plt.ylabel('Quality')
