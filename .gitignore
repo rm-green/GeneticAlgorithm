@@ -1,4 +1,4 @@
 GeneticAlgorithm/GeneticOutputs/GenAlg*.csv
 GeneticAlgorithm/GeneticProfilings/GenAlg*.txt
-
+.ipynb_checkpoints
 __pycache__
